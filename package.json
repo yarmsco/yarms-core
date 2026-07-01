@@ -1,0 +1,16 @@
+{
+  "name": "yarms-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Yarms master rule stack — shared usage logging, registry-driven model routing, eval sampling, and signals for every Yarms client codebase.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node scripts/selftest.js"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.2",
+    "@ai-sdk/google": "^4.0.2",
+    "@supabase/supabase-js": "^2.46.1",
+    "ai": "^7.0.6"
+  }
+}

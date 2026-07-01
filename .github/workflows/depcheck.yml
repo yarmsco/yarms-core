@@ -1,0 +1,32 @@
+name: depcheck — unused dependencies
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 13 * * 1'
+  workflow_dispatch:
+
+jobs:
+  unused-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Scan every package.json for unused dependencies
+        shell: bash
+        run: |
+          fail=0
+          cfg="$PWD/.depcheckrc.json"
+          while IFS= read -r pkgdir; do
+            echo "::group::depcheck $pkgdir"
+            if ! npx --yes depcheck "$pkgdir" --skip-missing --config "$cfg"; then
+              echo "::error::Unused dependencies found in $pkgdir"
+              fail=1
+            fi
+            echo "::endgroup::"
+          done < <(find . -name package.json -not -path '*/node_modules/*' -exec dirname {} \;)
+          exit $fail
