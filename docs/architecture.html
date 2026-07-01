@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Yarms — The Master Rule Stack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F2ECDD; --surface:#FBF8EF; --ink:#14130F; --muted:#6C6557; --line:#E1D9C6;
+    --accent:#2353FF; --accent-soft:#E7ECFF; --green:#1E8E5A; --green-soft:#E4F5EC;
+    --priv:#8A3B12; --priv-soft:#FBEDE3; --warm:#D6803A; --paper:#FFF;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Poppins",system-ui,sans-serif;font-size:14px;line-height:1.5;padding:34px 20px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;font-size:38px;letter-spacing:.01em;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 20px;max-width:70ch;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 26px;font-size:12.5px;font-weight:600;}
+  .legend span{display:inline-flex;align-items:center;gap:7px;}
+  .dot{width:13px;height:13px;border-radius:4px;display:inline-block;}
+  .dot.pub{background:var(--green-soft);border:2px solid var(--green);}
+  .dot.priv{background:var(--priv-soft);border:2px solid var(--priv);}
+  .dot.data{background:#fff;border:2px dashed var(--muted);}
+
+  .card{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(20,19,15,.05),0 10px 26px rgba(20,19,15,.06);}
+  .card.pub{border-color:var(--green);background:linear-gradient(0deg,#fff,var(--green-soft));}
+  .card.priv{border-color:var(--priv);}
+  .card.data{border-style:dashed;border-color:var(--muted);}
+  .tag{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:999px;display:inline-block;}
+  .tag.pub{background:var(--green);color:#fff;}
+  .tag.priv{background:var(--priv);color:#fff;}
+  .tag.data{background:var(--muted);color:#fff;}
+  .name{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;font-size:21px;letter-spacing:.02em;margin:8px 0 2px;}
+  .role{color:var(--muted);font-size:12.5px;margin:0 0 12px;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12.5px;font-weight:500;}
+  .chip.mono{font-family:"IBM Plex Mono",monospace;font-size:11.5px;}
+
+  .flow{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);margin:12px 0;}
+  .flow .arw{font-size:22px;line-height:1;color:var(--accent);}
+  .flow .lbl{font-size:11.5px;font-family:"IBM Plex Mono",monospace;}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:720px){.two{grid-template-columns:1fr;}}
+  ul{margin:8px 0 0;padding-left:18px;}
+  li{margin:0 0 5px;font-size:13px;}
+  li b{font-weight:600;}
+  .k{font-family:"IBM Plex Mono",monospace;font-size:11.5px;background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:5px;}
+
+  .loop{margin-top:30px;border:2px solid var(--accent);border-radius:16px;background:var(--accent-soft);padding:22px 24px;}
+  .loop h2{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;font-size:22px;letter-spacing:.02em;margin:0 0 4px;color:var(--accent);}
+  .loop .lead{color:#26407e;font-size:13px;margin:0 0 16px;}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media(max-width:720px){.steps{grid-template-columns:1fr;}}
+  .step{background:#fff;border:1px solid #c9d6ff;border-radius:11px;padding:13px 15px;position:relative;}
+  .step .no{font-family:"Anton",sans-serif;color:var(--accent);font-size:15px;}
+  .step p{margin:3px 0 0;font-size:12.5px;color:var(--ink);}
+  .closes{text-align:center;margin-top:14px;font-weight:600;font-size:13px;color:var(--accent);}
+
+  .note{margin-top:26px;border-left:4px solid var(--warm);background:#fdf3e9;border-radius:0 10px 10px 0;padding:14px 18px;font-size:13px;}
+  .note b{color:var(--priv);}
+  h3.sec{font-size:12px;font-family:"IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:30px 0 12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>The Master Rule Stack</h1>
+  <p class="sub">One shared <b>library</b> every codebase imports, plus a private <b>control plane</b> that watches all of them and pushes improvements back — the loop. Color = who can see the code.</p>
+
+  <div class="legend">
+    <span><i class="dot pub"></i> Public repo · library · <b>no secrets</b></span>
+    <span><i class="dot priv"></i> Private repo · app · secrets live in the runtime</span>
+    <span><i class="dot data"></i> Central datastore (Supabase)</span>
+  </div>
+
+  <!-- LIBRARY -->
+  <div class="card pub">
+    <span class="tag pub">Public · Library · No secrets</span>
+    <div class="name">yarms-core</div>
+    <div class="role">Imported by every repo as a zero-auth git dependency. Pure code — nothing runs, nothing secret.</div>
+    <div class="chips">
+      <span class="chip mono">logger</span>
+      <span class="chip mono">llm (registry-routed)</span>
+      <span class="chip mono">registry</span>
+      <span class="chip mono">signals</span>
+    </div>
+  </div>
+
+  <div class="flow"><span class="lbl">↑ imported by all of the below (npm i, zero auth)</span></div>
+
+  <!-- CONSUMERS: clients + control plane -->
+  <div class="two">
+    <div class="card priv">
+      <span class="tag priv">Private · Clients</span>
+      <div class="name">The apps</div>
+      <div class="role">Do the real work. Import <span class="k">yarms-core</span>, run on the model the Registry gives them, and emit telemetry.</div>
+      <div class="chips">
+        <span class="chip">portal · CRM</span>
+        <span class="chip">nyfta · FTA agents</span>
+        <span class="chip">yarms_agents · business agents</span>
+      </div>
+      <ul>
+        <li>call models via the <b>Registry</b> (by <span class="k">taskKey</span>)</li>
+        <li>emit <b>usage + eval samples + git activity</b> ↓</li>
+      </ul>
+    </div>
+
+    <div class="card priv">
+      <span class="tag priv">Private · Control Plane</span>
+      <div class="name">yarms-control-plane</div>
+      <div class="role">The loops. Imports <span class="k">yarms-core</span>, runs on a schedule, reads secrets from its runtime (Actions / Doppler).</div>
+      <ul>
+        <li><b>Model efficiency</b> — A/B cheaper models, propose downgrades</li>
+        <li><b>Bug + improvement</b> — the audit (now scans <i>all</i> repos)</li>
+        <li><b>Usage report</b> → #usage</li>
+        <li><b>Daily build report</b> → Shipped + build-in-public</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="flow">
+    <span class="arw">↓ &nbsp; ↑</span>
+    <span class="lbl">clients WRITE telemetry · control plane READS it · both share one store</span>
+  </div>
+
+  <!-- DATA -->
+  <div class="card data">
+    <span class="tag data">Central Supabase · one source of truth</span>
+    <div class="name" style="font-size:18px;">The datastore</div>
+    <div class="chips" style="margin-top:10px;">
+      <span class="chip mono">usage_log</span>
+      <span class="chip mono">model_registry</span>
+      <span class="chip mono">eval_samples</span>
+      <span class="chip mono">findings</span>
+    </div>
+  </div>
+
+  <!-- THE LOOP -->
+  <div class="loop">
+    <h2>↻ The loop</h2>
+    <p class="lead">This is the part that makes it "iterate on itself" — a human approves every change; nothing auto-swaps.</p>
+    <div class="steps">
+      <div class="step"><span class="no">1</span><p>Clients run on the Registry's model &amp; emit <b>usage + eval samples</b>.</p></div>
+      <div class="step"><span class="no">2</span><p>Control plane <b>reads</b> the telemetry, runs an <b>A/B</b> on cheaper models.</p></div>
+      <div class="step"><span class="no">3</span><p>Posts a ranked <b>proposal</b> to Slack — savings + confidence.</p></div>
+      <div class="step"><span class="no">4</span><p><b>You approve</b> (or not) in Slack.</p></div>
+      <div class="step"><span class="no">5</span><p>On yes, it <b>writes <span class="k">model_registry</span></b>.</p></div>
+      <div class="step"><span class="no">6</span><p>Every client <b>picks up the new model</b> on its next call — no redeploy.</p></div>
+    </div>
+    <div class="closes">→ new telemetry flows in → back to step 1 · the clients and the rules improve each other</div>
+  </div>
+
+  <div class="note">
+    <b>What moves, to get here:</b> the running tools currently inside <span class="k">yarms_agents/internal_tools/</span> — the <b>audit_agent</b> and the <b>usage report</b> — move out into the private <b>yarms-control-plane</b> (which imports <span class="k">yarms-core</span>), joined by the new efficiency + build-report loops. <span class="k">yarms_agents</span> loses <span class="k">internal_tools/</span> and becomes just another client. Secrets never get committed anywhere — public or private — they always live in the runtime.
+  </div>
+
+</div>
+</body>
+</html>
