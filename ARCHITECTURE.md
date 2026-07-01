@@ -72,6 +72,39 @@ is the **machine enforcement** of the parts that learn. Together they are the ma
 stack. A new client plugs in by: following `CLAUDE.md` + `npm i yarms-core` and using its
 `logger` / `llm` / `signals`.
 
+## Portability — clients can take their code in-house (no lock-in)
+
+A core Yarms promise is that a client can take their code in-house. `yarms-core` must
+never compromise that, so it is designed as **infrastructure, not lock-in** — a dependency
+like `express` or the AI SDK, not a closed service you're chained to.
+
+**What protects the promise (all already true — keep it true):**
+- **Public** — clients can install, read, and fork it.
+- **No secrets, env-driven** — it reads its backend (`USAGE_SUPABASE_*`, provider keys) from
+  the *consumer's* env. There is **no hard-coded "phone home to Yarms."**
+- **Degrades to a no-op** — with `USAGE_SUPABASE_*` unset, `logger`/`registry`/`signals`
+  silently no-op and the model falls back to the caller's `*_MODEL` env. The client's code
+  still runs, unchanged.
+
+**A client taking code in-house has three clean exits:**
+1. **Keep it, unset the central creds** → runs identically, no telemetry, model from env. Zero work.
+2. **Point it at their own Supabase** → they self-host the whole platform layer (logging,
+   routing, even their own control-plane loops). An *upsell*, not a loss.
+3. **Rip it out** → thin and used only at the edges, so swapping to direct SDK calls is small.
+
+The **control plane is a Yarms-side service, not lock-in**: a departing client simply stops
+receiving it (like canceling a SaaS); their code keeps running.
+
+**Rules that keep this true — non-negotiable:**
+- **Client deliverables live in their own portable repos** — each client's code is an
+  extractable unit; never bury it inside a shared Yarms monorepo.
+- **Use `yarms-core` at the edges (LLM calls, logging) — never weave `registry` / `signals` /
+  `taskKey` plumbing through a client's business logic.** This is the #1 thing that would make
+  ejection hard.
+- **Keep it env-driven and graceful forever** — never hard-code a Yarms endpoint or require
+  Yarms creds to function.
+- **Ship a one-page eject note per deliverable** so "take it in-house" is a tested handoff, not a vibe.
+
 ## Model routing resolution order
 For any LLM call the effective model is resolved as:
 1. `model_registry[taskKey].model` (if present) — what the efficiency loop set,
