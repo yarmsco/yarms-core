@@ -35,7 +35,7 @@ create index if not exists eval_samples_task_idx on public.eval_samples(task_key
 -- Bugs + improvements surfaced by the review loops (and client `signals`).
 create table if not exists public.findings (
   id          uuid primary key default gen_random_uuid(),
-  type        text not null,                    -- 'bug' | 'improvement' | 'model_efficiency' | 'build'
+  type        text not null,                    -- 'bug' | 'improvement' | 'model_efficiency' | 'build' | 'roadmap'
   client      text,
   agent       text,
   title       text not null,
