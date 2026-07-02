@@ -62,9 +62,12 @@ create table if not exists public.build_log (
   repos_shipped   int  not null default 0,
   blocks          jsonb,                             -- the exact Slack blocks posted (full fidelity)
   slack_text      text,                              -- Slack fallback text
+  source_markdown text,                              -- verbatim original entry for manual/imported days (null for loop-generated)
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );
+-- for build_log tables created before source_markdown existed (idempotent — safe to re-run):
+alter table public.build_log add column if not exists source_markdown text;
 create index if not exists build_log_date_idx on public.build_log(report_date desc);
 
 -- RLS on + EXPLICIT service_role grants (auto-expose-off safe; service_role is the
