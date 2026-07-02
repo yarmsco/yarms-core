@@ -49,9 +49,31 @@ create index if not exists findings_status_idx on public.findings(status, type);
 
 -- RLS on + EXPLICIT service_role grants (auto-expose-off safe; service_role is the
 -- only user of these tables — the app/loops bypass RLS with it).
+-- Daily build history — one authoritative row per day, written by the Daily Build
+-- Report loop (yarms-control-plane) AFTER it posts to Slack. This is the durable,
+-- queryable home for build history; it retires the interim local `build-log/*.md`
+-- files. Upserted on `report_date`, so a re-run for the same day overwrites cleanly.
+create table if not exists public.build_log (
+  report_date     date primary key,                 -- the TZ day the report covers
+  shipped         jsonb not null default '{}',       -- { repo: "mrkdwn bullets" } — what shipped
+  roadmap         jsonb not null default '{}',       -- { project: [{title, detail}] } — open-roadmap snapshot
+  build_in_public text,                              -- optional shareable narrative (reserved; may be null)
+  commit_count    int  not null default 0,
+  repos_shipped   int  not null default 0,
+  blocks          jsonb,                             -- the exact Slack blocks posted (full fidelity)
+  slack_text      text,                              -- Slack fallback text
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index if not exists build_log_date_idx on public.build_log(report_date desc);
+
+-- RLS on + EXPLICIT service_role grants (auto-expose-off safe; service_role is the
+-- only user of these tables — the app/loops bypass RLS with it).
 alter table public.model_registry enable row level security;
 alter table public.eval_samples   enable row level security;
 alter table public.findings       enable row level security;
+alter table public.build_log      enable row level security;
 grant all on public.model_registry to service_role;
 grant all on public.eval_samples   to service_role;
 grant all on public.findings       to service_role;
+grant all on public.build_log      to service_role;
