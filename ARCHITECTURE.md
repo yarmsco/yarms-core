@@ -60,7 +60,7 @@ has the **same shape — read signal → draft → Slack review → write back o
 | **Model Efficiency** | `usage_log` + `eval_samples` | model-registry downgrade proposals, proven by A/B (replay sampled inputs on the cheaper model, judge parity) + $ savings |
 | **Bug review** | code + telemetry | ranked bugs → `findings` |
 | **Improvement review** | code + telemetry | improvement suggestions → `findings` |
-| **Daily build report** | git activity + session | Shipped + build-in-public draft → Slack approve → `build_log` table (interim: local `build-log/*.md` until the table + loop ship) |
+| **Daily build report** | git activity (GitHub API) + roadmap | per-repo "shipped" summary + open roadmap → Slack, and one row/day → `build_log` table (build-in-public narrative reserved, not yet generated) |
 
 **The loop never auto-applies.** It posts to Slack; a human approves; then it writes the
 Registry / doc.
