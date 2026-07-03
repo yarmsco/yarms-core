@@ -1,6 +1,6 @@
 {
   "name": "yarms-core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Yarms master rule stack — shared usage logging, registry-driven model routing, eval sampling, and signals for every Yarms client codebase.",
   "main": "src/index.js",
