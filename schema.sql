@@ -70,6 +70,17 @@ create table if not exists public.build_log (
 alter table public.build_log add column if not exists source_markdown text;
 create index if not exists build_log_date_idx on public.build_log(report_date desc);
 
+-- Small key→value store for Control-Plane runtime pointers. Today it holds the
+-- Slack coordinates of the ONE persistent roadmap message ('build_report.roadmap_msg'
+-- → {channel, ts}) so the daily loop and the Yarmy checkbox handler edit that single
+-- message in place instead of re-posting the roadmap every day. Central Supabase,
+-- service-role only. (Same shape as the per-app app_state tables in the client repos.)
+create table if not exists public.app_state (
+  key         text primary key,
+  value       jsonb not null,
+  updated_at  timestamptz not null default now()
+);
+
 -- RLS on + EXPLICIT service_role grants (auto-expose-off safe; service_role is the
 -- only user of these tables — the app/loops bypass RLS with it).
 alter table public.model_registry enable row level security;
