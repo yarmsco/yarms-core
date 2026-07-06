@@ -46,4 +46,45 @@ async function resolveFinding(id, { status = 'done', metadata = null } = {}) {
   }
 }
 
-module.exports = { recordFinding, resolveFinding };
+// Edit a finding's content in place — the piece Slack "edit an item" needs. Only
+// the fields passed are touched (agent/project, title, detail); `status` stays put
+// (use resolveFinding for that). Best-effort; returns true if a row was updated.
+async function updateFinding(id, { agent, title, detail } = {}) {
+  try {
+    const d = usageDb();
+    if (!d || !id) return false;
+    const patch = {};
+    if (agent !== undefined) patch.agent = agent;
+    if (title !== undefined) patch.title = title;
+    if (detail !== undefined) patch.detail = detail;
+    if (!Object.keys(patch).length) return false;
+    const { data, error } = await d.from('findings').update(patch).eq('id', id).select('id');
+    if (error) throw error;
+    return Array.isArray(data) && data.length > 0;
+  } catch (e) {
+    console.warn('[yarms-core/signals] updateFinding failed (ignored):', e.message);
+    return false;
+  }
+}
+
+// List findings (default: open ones), oldest-first — so a Slack surface can build a
+// board or an edit picker from the live rows rather than re-parsing message blocks.
+// Best-effort; returns [] if unconfigured or on error.
+async function listFindings({ type, status = 'open', client } = {}) {
+  try {
+    const d = usageDb();
+    if (!d) return [];
+    let q = d.from('findings').select('id,type,client,agent,title,detail,severity,status,created_at');
+    if (type) q = q.eq('type', type);
+    if (status) q = q.eq('status', status);
+    if (client) q = q.eq('client', client);
+    const { data, error } = await q.order('created_at', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.warn('[yarms-core/signals] listFindings failed (ignored):', e.message);
+    return [];
+  }
+}
+
+module.exports = { recordFinding, resolveFinding, updateFinding, listFindings };
