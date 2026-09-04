@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
   schedule:
+    # Weekly sweep, Mondays 13:00 UTC. NOTE: yarms-core is a library — it only
+    # changes when the shared standard does, so it can sit >60 days without a
+    # commit, at which point GitHub auto-disables this cron (the file, history
+    # and the push/PR triggers all survive; only the schedule pauses). If the
+    # weekly run goes quiet, re-enable it on the Actions page.
     - cron: '0 13 * * 1'
   workflow_dispatch:
 
