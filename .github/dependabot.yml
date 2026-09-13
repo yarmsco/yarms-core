@@ -1,0 +1,45 @@
+# Dependabot — the standing refresh that keeps this repo's toolchain current.
+#
+# WHY THIS EXISTS (2026-09-13): nothing watched version drift before today.
+# actions/checkout and actions/setup-node sat on v4 across all the repos while
+# upstream reached v7, and six depcheck workflows pinned Node 20 months past its
+# April 2026 EOL. The deprecation notice printed on every single run for months —
+# nobody is paged by a warning, so it just accumulated until something broke.
+#
+# It PROPOSES, it never applies. Dependabot opens a PR and stops there. That matters
+# doubly here: every client repo imports yarms-core by tag, so a dependency change
+# in this repo travels. Read the PR, then merge.
+#
+# Grouped, so a quiet week is zero PRs and a busy one is a single review per
+# ecosystem rather than a storm. Majors are deliberately NOT grouped with minors —
+# a major wants its changelog read (v5 of the actions moved the runner to Node 24).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directories: ["/"]
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: deps
+    open-pull-requests-limit: 5
