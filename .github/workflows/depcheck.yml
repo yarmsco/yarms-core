@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'   # 20 hit EOL April 2026; matches the runtime pin
       - name: Scan every package.json for unused dependencies
         shell: bash
         run: |
