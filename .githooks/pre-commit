@@ -1,0 +1,18 @@
+#!/bin/sh
+# Refuse to commit a change to the contract while the workspace's copy differs.
+#
+# The copy at <workspace>/CLAUDE.md is what Claude Code actually loads in every
+# session (see scripts/sync-workspace-contract.js for why a copy exists at all).
+# A contract changed here and not there is a standard nobody is reading.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+# Skip deliberately:      git commit --no-verify
+
+if git diff --cached --name-only | grep -q '^WORKSPACE\.md$'; then
+  if ! node scripts/sync-workspace-contract.js --check; then
+    echo ""
+    echo "WORKSPACE.md is staged, but the workspace copy is out of step."
+    echo "Run: npm run sync:workspace   (then stage nothing — the copy is not tracked here)"
+    exit 1
+  fi
+fi

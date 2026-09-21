@@ -5,7 +5,9 @@
   "description": "Yarms master rule stack — shared usage logging, registry-driven model routing, eval sampling, and signals for every Yarms client codebase.",
   "main": "src/index.js",
   "scripts": {
-    "test": "node scripts/selftest.js"
+    "test": "node scripts/selftest.js",
+    "sync:workspace": "node scripts/sync-workspace-contract.js",
+    "verify:workspace": "node scripts/sync-workspace-contract.js --check"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.2",

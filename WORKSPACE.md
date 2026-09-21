@@ -163,10 +163,25 @@ folder and have to ask "why is this here" — either it's in the ledger, or it's
 If something new lands locally and isn't on this list, that's the signal to either move it
 to the cloud or add a row here with the reason.
 
-**This contract is versioned too — and it lives in `yarms-core`** (2026-09-21). The file
-you are reading is `yarms-core/WORKSPACE.md`; `C:\Build_Things!\CLAUDE.md` is a three-line
-stub that imports it, so every session still loads the standards while there is only ever
-one copy to change. The shared skills it points at sit beside it in `yarms-core/skills/`.
+**This contract is versioned, and it lives in `yarms-core`** (2026-09-21). The canonical
+file is `yarms-core/WORKSPACE.md`. **Edit it there** — `C:\Build_Things!\CLAUDE.md` is a
+generated copy, and the next sync overwrites whatever you type into it:
+
+```
+edit yarms-core/WORKSPACE.md
+npm --prefix yarms-core run sync:workspace
+```
+
+The copy exists because Claude Code loads its standards from `CLAUDE.md` at and above the
+working directory, so a session opened in `yarms_agents` never reads this repo — and the
+obvious fix, a one-line `@yarms-core/WORKSPACE.md` import, **silently does not work from a
+subproject**: an import resolving outside the working directory is gated, so the pointer
+loads and its contents do not. No error, no warning, no standards. Tested, not assumed.
+
+Two things keep the copy honest rather than hoping: `yarms-core`'s pre-commit hook refuses
+a change to `WORKSPACE.md` while the copy differs, and the weekly audit agent reports drift
+if it ever gets past that. The shared skills work the same way — canonical in
+`yarms-core/skills/`, with a pointer under `.claude/skills/` so they stay discoverable.
 
 It belongs there because `yarms-core/ARCHITECTURE.md` is the **machine** half of this same
 contract — the Registry, the Control Plane, the loops that enforce in code what this file
