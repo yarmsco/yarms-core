@@ -1,0 +1,5 @@
+# The git hooks are run by /bin/sh. Git on Windows checks files out with CRLF by
+# default, and sh reads the \r as part of the shebang path — "/bin/sh^M: bad
+# interpreter" — so the hook that guards the contract would fail to run at all on
+# a fresh clone. Pin them to LF.
+.githooks/* text eol=lf
