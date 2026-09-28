@@ -179,7 +179,7 @@ subproject**: an import resolving outside the working directory is gated, so the
 loads and its contents do not. No error, no warning, no standards. Tested, not assumed.
 
 Two things keep the copy honest rather than hoping: `yarms-core`'s pre-commit hook refuses
-a change to `WORKSPACE.md` while the copy differs, and the weekly audit agent reports drift
+a change to `WORKSPACE.md` while the copy differs, and `npm run verify:workspace` reports drift
 if it ever gets past that. The shared skills work the same way — canonical in
 `yarms-core/skills/`, with a pointer under `.claude/skills/` so they stay discoverable.
 
@@ -216,8 +216,16 @@ the ledger above with a reason, or it is a bug to fix.
   you decide** (the same rule the Model Efficiency Loop follows) — Railway auto-deploys
   from `main`, so anything auto-merged would deploy itself unreviewed. Majors are
   deliberately left ungrouped: read the changelog before taking one.
-- **Continuous bug/improvement review** — codebases are reviewed periodically, not
-  set-and-forget.
+- **Continuous code review: the Code Review Agent** (a weekly `yarms-control-plane` loop
+  on GitHub Actions, since 2026-09-28; it replaced the local "audit agent"). Every org repo
+  except NYFTA and personal_os is reviewed each week, and every fix it finds becomes a PR. **Two lanes:** a fix
+  that cannot change a business output (what a client or the business receives) is merged by
+  the agent once CI passes; anything that could change one waits for your Approve in the
+  portal's Human in the loop queue. **Rules decide the lane, not the model.** A per-repo
+  safe list of paths is the only way into the auto lane, and anything unlisted waits for
+  approval. It is the one deliberate exception to "it proposes; you decide", and it exists
+  because a finding nobody has time to apply is just a note. Full rules:
+  `yarms-core/ARCHITECTURE.md` §3.
 - **Model Efficiency Loop (periodic model-ROI audit).** Model choices are never locked —
   they're revisited on a cadence by an actual backend loop (in `yarms-core` / the Control
   Plane), not by goodwill. Because every LLM call is tagged in `usage_log`, the loop

@@ -58,12 +58,29 @@ has the **same shape — read signal → draft → Slack review → write back o
 | Loop | Reads | Produces |
 |---|---|---|
 | **Model Efficiency** | `usage_log` + `eval_samples` | model-registry downgrade proposals, proven by A/B (replay sampled inputs on the cheaper model, judge parity) + $ savings |
-| **Bug review** | code + telemetry | ranked bugs → `findings` |
-| **Improvement review** | code + telemetry | improvement suggestions → `findings` |
+| **Code Review Agent** (weekly; replaces the local audit agent) | each org repo's stable code, except NYFTA and personal_os | a fix per finding, each on its own PR, sorted into one of two lanes (below) → `findings`, #yarms-bugs / #yarms-improvements, and the portal's Human in the loop queue |
 | **Daily build report** | git activity (GitHub API) + roadmap | per-repo "shipped" summary + open roadmap → Slack, and one row/day → `build_log` table (build-in-public narrative reserved, not yet generated) |
 
-**The loop never auto-applies.** It posts to Slack; a human approves; then it writes the
-Registry / doc.
+**A loop never auto-applies anything that can change a business output.** It posts to Slack; a
+human approves; then it writes the Registry / doc / merge.
+
+**The one exception is the Code Review Agent's auto-fix lane** (JY, 2026-09-28): a fix
+that cannot change what a client or the business receives is merged by the agent, after
+CI passes, and reported afterwards. Everything else is a PR that waits for a human. The
+lanes are decided by rules, never by the model:
+- **A path decides the lane.** Each repo's safe list names the paths whose changes cannot
+  reach an output (tests, internal tooling, docs that aren't client-facing). A fix touching
+  *any* path not on the list goes to approval, and so does one with no list at all. An
+  unknown path is a business path.
+- **The model can escalate, never de-escalate.** It may send a safe-path fix to approval;
+  it cannot move a business-path fix into the auto lane.
+- **Always approval, whatever the path:** schema/migrations, secrets and env, workflow
+  files, dependency majors, and anything in a client-facing prompt or template.
+- **Merges are batched** to one quiet window per repo per week, because every push to
+  `main` redeploys Railway and a redeploy kills in-flight agent runs.
+
+Widening the auto lane is a one-line safe-list change, made by a person, reviewed like any
+other: the lane grows from evidence, not from the model's confidence.
 
 ## The contract layer (stays in `CLAUDE.md`)
 The root `C:\Build_Things!\CLAUDE.md` remains the **human contract** — the pure standards
