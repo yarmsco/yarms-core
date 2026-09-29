@@ -264,19 +264,8 @@ Each build day produces a dated entry with two parts:
 
 One habit produces both the project record *and* marketing content.
 
-**Where it lives (a cloud artifact, not local files):**
-- The **daily-build-report Control Plane loop** (`yarms-control-plane/src/build-report.js`)
-  runs on **GitHub Actions** (cron `0 0 * * *` = 00:00 UTC / 8pm ET; GitHub queues scheduled
-  jobs late, so runs actually land ~9:30–10:15pm ET — *not* dependent on this laptop): it
-  pulls the day's commits across the org repos (GitHub API), summarizes what shipped **per
-  repo** from the real diffs (via the `yarms-core` `llm` layer),
-  posts a per-codebase report to Slack, and **writes one row per day to the `build_log`
-  table in the central usage Supabase** (`USAGE_SUPABASE_*` — same project as
-  `model_registry`/`eval_samples`/`findings`). That table is the durable, queryable history.
-- **Live as of 2026-07-02:** `build_log` is applied in the central Supabase (`rsnny`) and the
-  nightly loop persists to it; the four legacy `build-log/*.md` entries were backfilled
-  (verbatim in `source_markdown`, verified) via `scripts/backfill-build-log.js`, and the local
-  `build-log/` folder was removed. History is now cloud-only — query the `build_log` table.
-- *Build-in-public narrative:* the loop currently produces the technical "shipped" view; the
-  shareable/marketing narrative is a **reserved `build_in_public` column, not yet generated** —
-  a future enhancement, not a live output.
+**Where it lives:** a cloud loop, not local files — the nightly daily-build-report loop in
+`yarms-control-plane` writes one row per day to the `build_log` table in the central usage
+Supabase. That table is the history; there is no local `build-log/` folder. Only the
+technical "shipped" half is generated today — the build-in-public narrative is a reserved,
+not-yet-generated column. Mechanics: `yarms-control-plane/CLAUDE.md`.
