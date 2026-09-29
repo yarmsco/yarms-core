@@ -116,11 +116,18 @@ through the router.
    on every table; `service_role` = server-only; public/anon keys are
    insert-/least-privilege only with explicit grants. Schema lives in `schema.sql`.
 
-5. **Slack is the cockpit, not a dashboard.**
-   "Inputs, not outputs" — reduce decisions, don't build reporting UIs. **Yarmy** =
-   business bot; **Covey** = personal-OS bot (separate bots, same workspace).
-   Notifications are **data-event-driven** where possible (DB webhook → handler),
-   not coupled to a single entry path.
+5. **The portal is the cockpit; Slack is the Human-in-the-Loop interface.**
+   The portal (`portal.yarms.co`) is where the business is run and seen: state,
+   history, artifacts, charts and dashboards — the system of record for our own work
+   and every client's. Slack is where a decision comes to a person: approvals,
+   questions an agent cannot answer, alerts that need action. A decision made in
+   Slack **writes back** to Postgres, so the portal always shows what happened.
+   Keep Slack to "inputs, not outputs" — an interrupt must ask for something; status
+   and reporting belong in the portal. **Yarmy** = business bot; **Covey** =
+   personal-OS bot (separate bots, same workspace). Notifications are
+   **data-event-driven** where possible (DB webhook → handler), not coupled to a
+   single entry path. *(Reframed 2026-09-28, JY: "Slack is no longer the cockpit,
+   its the Human in the Loop interface. The cockpit is the portal now.")*
 
 6. **Reuse, don't rebuild.** Pull battle-tested integration clients from existing
    repos (Granola, Google Calendar, the usage logger, QuickBooks) rather than
