@@ -60,13 +60,22 @@ connect flow happen **in the GUIs** (you, in a browser).
 - [ ] Assemble the env list — typical: `ANTHROPIC_API_KEY`, `SUPABASE_URL`,
       `SUPABASE_SERVICE_KEY`, `SENTRY_DSN`, + Slack/Google/QB as needed.
 - [ ] **Do NOT set `PORT`** — Railway injects it; the app reads `process.env.PORT`.
-- [ ] `.env` is local-only (gitignored); the real values live in Railway.
-- [ ] Watch for stray leading spaces when pasting — clean variable names only.
+- [ ] The values live in **Doppler `prd`** (project = repo name). No `.env`; run locally
+      with `doppler run --`. Railway gets them from Doppler's sync (step 5), never by hand.
 
 ### 5. Compute (Railway)
 - [ ] New Railway project → **Deploy from the GitHub repo** (`main`); it auto-deploys on
       every push.
-- [ ] Set env vars via the **Raw Editor** (paste `.env` minus `PORT`).
+- [ ] Env vars come from a **Doppler → Railway sync**: Doppler → project → `prd` →
+      Integrations → Add Sync → Railway → project, `production`, and **the service**.
+      **Never target "Shared"**: the service does not read shared variables unless each is
+      referenced, so the sync reports success while the service never gets a value, and
+      Doppler cannot retarget an existing sync (delete it and add a new one). Choose
+      **don't import**. Never set a variable in Railway by hand; the sync won't remove it,
+      and it drifts.
+- [ ] Prove the credentials, not just the boot: a clean start only proves the Slack
+      socket. Run a read-only check of every secret against Railway's values
+      (`yarms_agents/scripts/verify-secrets.js` is the model; copy it per repo).
 - [ ] Watch the deploy log for a clean boot — the first deploy often crashes on a missing
       env var or a cross-repo require; fix and it redeploys.
 - [ ] **Stop any local instance** running the same Slack token (two connections fight over
@@ -99,6 +108,11 @@ connect flow happen **in the GUIs** (you, in a browser).
 - **Supabase auto-expose OFF** → you MUST grant `service_role` or every query 403s.
 - **Uptime URL must include `/api/health`** — the bare domain 404s and reads as "down."
 - **One live instance only** — local + Railway on the same Slack token = event races + double crons.
+- **A Doppler sync pointed at Railway's "Shared" variables fails silently.** yarms_agents ran on
+  hand-copied values while Doppler reported every sync a success; the first secret
+  added after that (Rho, 2026-09-29) never arrived, and the next morning's pull failed with
+  `RHO_TOKEN_KINETIC is not set`. Target the service; compare the names with
+  `railway variables --kv` after any secrets change.
 - **Phantom tool-calls:** loaded conversation history can make the model *pattern-complete
   fake confirmations* ("Logged/Booked/Saved…") instead of calling the tool. Neutralize the
   bot's prior confirmation lines in any agent that rebuilds Slack history and calls write tools.
@@ -123,6 +137,7 @@ connect flow happen **in the GUIs** (you, in a browser).
 ## New-project checklist (TL;DR of the runbook above)
 
 - [ ] Doppler project (name = repo), secrets in `prd`, folder linked, run via `doppler run --`
+- [ ] Doppler → Railway sync targets **the service** (never Shared); every secret verified live
 - [ ] LLM via the Vercel AI SDK, model behind a `*_MODEL` env (prefer `yarms-core`'s `llm`)
 - [ ] Usage logging to the central `usage_log` from the first LLM call (tagged by
       `agent` + `call_type` so the Model Efficiency Loop can attribute cost per task)

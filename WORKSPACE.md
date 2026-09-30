@@ -95,6 +95,10 @@ through the router.
    `doppler setup`; run everything via `doppler run -- <cmd>`. Reuse shared creds by
    copying from existing Doppler configs (e.g. `ANTHROPIC_API_KEY`; the **Yarmy**
    `SLACK_BOT_TOKEN` lives in `yarms_agents/prd`; `USAGE_SUPABASE_*` in personal_os/nyfta).
+   Railway gets `prd` through Doppler's Railway sync, targeted at **the service, never
+   Shared**. A Shared-targeted sync reports success while the service never sees a
+   value; that is how yarms_agents lost the Rho token on 2026-09-30. Never hand-set a
+   Railway variable.
 
 2. **LLM calls → the Vercel AI SDK (`ai` + `@ai-sdk/*`).**
    Never wire a single vendor's SDK directly. The model is ONE swappable string
