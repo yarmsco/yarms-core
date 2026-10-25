@@ -14,19 +14,22 @@ async function resolveModel(taskKey, fallback = 'claude-sonnet-4-6') {
   const hit = _cache.get(taskKey);
   if (hit && hit.exp > Date.now()) return hit.model || fallback;
 
-  let model = fallback;
+  let override = null;
   try {
     const d = usageDb();
     if (d) {
       const { data, error } = await d.from('model_registry').select('model').eq('task_key', taskKey).maybeSingle();
       if (error) throw error;
-      if (data && data.model) model = data.model;
+      if (data && data.model) override = data.model;
     }
   } catch (e) {
     console.warn('[yarms-core/registry] resolveModel failed, using fallback:', e.message);
   }
-  _cache.set(taskKey, { model, exp: Date.now() + TTL_MS });
-  return model;
+  // Only cache a real Registry override. If there is none, do not cache the
+  // caller's fallback — another call site with the same taskKey may pass a
+  // different fallback and must resolve to its own, not this one's.
+  if (override) _cache.set(taskKey, { model: override, exp: Date.now() + TTL_MS });
+  return override || fallback;
 }
 
 // Set/replace a task's model mapping (used by the efficiency loop on approval, or seeding).
