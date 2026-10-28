@@ -77,6 +77,11 @@ function skillPointer(canonicalSkill, repoRelative) {
     '',
     `**Read \`${repoRelative}\`** — that is the skill, and it is the versioned copy.`,
     '',
+    // A vendored skill stays byte-for-byte upstream; our rules on top of it live in a
+    // YARMS.md beside it, and a session that skips that file skips the rules.
+    ...(fs.existsSync(path.join(path.dirname(canonicalSkill), 'YARMS.md'))
+      ? [`**Then read \`${path.posix.join(path.posix.dirname(repoRelative), 'YARMS.md')}\`** — our rules on top of it. The skill itself is vendored unchanged.`, '']
+      : []),
     'This pointer exists so the skill is discoverable from anywhere in the workspace while',
     'its text lives in the repo that carries the standards. A runbook copied into two files',
     'is a runbook that is wrong in one of them.',
