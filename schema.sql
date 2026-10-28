@@ -81,6 +81,33 @@ create table if not exists public.app_state (
   updated_at  timestamptz not null default now()
 );
 
+-- Security Audit history — one row per run of Cloudflare's security-audit skill
+-- (yarms-control-plane .github/workflows/security-audit.yml). The skill builds on
+-- earlier runs by reading their coverage ledger + findings from sibling run-N folders;
+-- the runner starts empty, so the loop writes each run here and restores them all
+-- before the next one. Also the record of what each audit cost. Holds open
+-- vulnerability detail: service-role only, never exposed.
+create table if not exists public.security_audit_runs (
+  id                uuid primary key default gen_random_uuid(),
+  repo              text not null,
+  run_n             int  not null,                 -- run-N folder number, 1-based per repo
+  gh_run_id         bigint,                        -- the Actions run that produced it
+  source_ref        text,                          -- audited commit
+  profile           text,                          -- quick | standard | deep
+  model             text,
+  cost_usd          numeric(10,4),
+  run_status        text,                          -- complete | incomplete | in_progress
+  incomplete_reason text,
+  counts            jsonb not null default '{}',   -- { confirmed, needs_validation, rejected, units: {status: n} }
+  run_metadata      jsonb,                         -- the skill's run-metadata.json
+  coverage_ledger   jsonb,                         -- coverage-ledger.json
+  findings          jsonb,                         -- findings.json
+  report_md         text,                          -- REPORT.md
+  created_at        timestamptz not null default now(),
+  unique (repo, run_n)
+);
+create index if not exists security_audit_runs_repo_idx on public.security_audit_runs(repo, created_at desc);
+
 -- RLS on + EXPLICIT service_role grants (auto-expose-off safe; service_role is the
 -- only user of these tables — the app/loops bypass RLS with it).
 alter table public.model_registry enable row level security;
@@ -88,8 +115,10 @@ alter table public.eval_samples   enable row level security;
 alter table public.findings       enable row level security;
 alter table public.build_log      enable row level security;
 alter table public.app_state      enable row level security;
+alter table public.security_audit_runs enable row level security;
 grant all on public.model_registry to service_role;
 grant all on public.eval_samples   to service_role;
 grant all on public.findings       to service_role;
 grant all on public.build_log      to service_role;
 grant all on public.app_state      to service_role;
+grant all on public.security_audit_runs to service_role;

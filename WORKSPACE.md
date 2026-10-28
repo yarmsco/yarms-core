@@ -62,6 +62,13 @@ through the router.
 > Two roles for "Claude," don't conflate: (1) **Claude the model** — the current runtime
 > brain, behind the router, *swappable*; (2) **Claude Code** — the dev tool used to *build*
 > the stack, not part of the runtime.
+>
+> **The one place Claude Code runs on a schedule is the Security Audit** (below), and it
+> stays on the dev-tool side of that line: it inspects our own code, serves no client, and
+> produces findings, not business output. That is why it may call Claude Code directly
+> rather than through the router. The fixes it leads to are proposed through the router,
+> like every other model call. Any new scheduled Claude Code use needs the same test, not
+> this precedent.
 
 ---
 
@@ -237,6 +244,21 @@ the ledger above with a reason, or it is a bug to fix.
   approval. It is the one deliberate exception to "it proposes; you decide", and it exists
   because a finding nobody has time to apply is just a note. Full rules:
   `yarms-core/ARCHITECTURE.md` §3.
+- **Security Audit** (a weekly `yarms-control-plane` loop on GitHub Actions, since
+  2026-10-28). Cloudflare's open-source `security-audit` skill, vendored unchanged at a
+  pinned commit in `yarms-core/skills/security-audit/` (our rules: `YARMS.md` there), run
+  headless by Claude Code. It looks only for real trust-boundary failures, and a separate
+  agent tries to disprove every finding before it counts. Each Sunday run audits the one
+  most overdue repo, or none: the portal monthly, `yarms_agents` and NYFTA every two
+  months, the rest every four (JY, 2026-10-28: half the first proposal, "too high of an
+  expense for a code base that isn't fraught with access points. Maybe as we grow").
+  Runs build on each other through `security_audit_runs`, so a repo that has not changed is
+  cheap to recheck. The audit changes nothing itself: a **confirmed** finding becomes a fix
+  PR in the **approval** lane, never the auto lane, and waits in the same portal queue as
+  Code Review fixes. A finding the source cannot settle goes to Slack as a question.
+  The auditor runs with no secrets but the model key, and cannot execute the code it reads.
+  It complements the Code Review Agent; it does not replace it. Mechanics:
+  `yarms-control-plane/src/security-audit/`.
 - **Model Efficiency Loop (periodic model-ROI audit).** Model choices are never locked —
   they're revisited on a cadence by an actual backend loop (in `yarms-core` / the Control
   Plane), not by goodwill. Because every LLM call is tagged in `usage_log`, the loop
