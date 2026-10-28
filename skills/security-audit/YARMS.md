@@ -28,6 +28,13 @@ the commit above.
 - **Source only.** We have no OS-enforced sandbox (no network, allowlisted env, write-only
   scratch), so the skill must not execute target code. Anything it cannot prove from source
   stays `needs_validation`, which is the skill's own rule when the sandbox is missing.
+- **Always select `AI-AND-LLM.md` when the target calls a model** (anything using
+  `yarms-core`'s `llm`, the Vercel AI SDK `ai` package, or a provider SDK). Our agents feed
+  text we do not control (Gmail, Slack, Granola, client-entered fields, bank and QuickBooks
+  data) into prompts, and model output decides what gets posted, sent or stored. That is the
+  prompt-injection surface the companion exists for, even where the model looks like
+  "notification glue". The first portal pilot (2026-10-28) excluded it on exactly that
+  reasoning while the portal's context brain feeds mail and Slack into prompts.
 - **Findings, not fixes.** The audit changes nothing. A confirmed finding's fix goes through
   the Code Review Agent's **approval** lane, never the auto lane: a security fix is never a
   change that "cannot change a business output".
