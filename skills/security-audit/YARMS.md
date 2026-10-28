@@ -35,6 +35,9 @@ the commit above.
   prompt-injection surface the companion exists for, even where the model looks like
   "notification glue". The first portal pilot (2026-10-28) excluded it on exactly that
   reasoning while the portal's context brain feeds mail and Slack into prompts.
+  **A prior run's companion selection does not carry this rule forward:** if a prior run did
+  not apply `AI-AND-LLM.md` to a target that calls a model, seed its units now as current
+  work. (Portal run-2 inherited run-1's plan and audited no model surface at all.)
 - **Findings, not fixes.** The audit changes nothing. A confirmed finding's fix goes through
   the Code Review Agent's **approval** lane, never the auto lane: a security fix is never a
   change that "cannot change a business output".
