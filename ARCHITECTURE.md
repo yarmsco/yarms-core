@@ -58,7 +58,7 @@ has the **same shape — read signal → draft → Slack review → write back o
 | Loop | Reads | Produces |
 |---|---|---|
 | **Model Efficiency** | `usage_log` + `eval_samples` | model-registry downgrade proposals, proven by A/B (replay sampled inputs on the cheaper model, judge parity) + $ savings |
-| **Code Review Agent** (weekly; replaces the local audit agent) | each org repo's stable code, except NYFTA and personal_os | a fix per finding, each on its own PR, sorted into one of two lanes (below) → `findings`, #yarms-bugs / #yarms-improvements, and the portal's Human in the loop queue |
+| **Code Review Agent** (weekly; replaces the local audit agent) | each org repo's stable code, except NYFTA and personal_os | a fix per finding, each on its own PR, sorted into one of two lanes (below) → `findings`, one weekly post in #yarms-bugs (bugs + improvements sections), and the portal's Human in the loop queue |
 | **Daily build report** | git activity (GitHub API) + roadmap | per-repo "shipped" summary + open roadmap → Slack, and one row/day → `build_log` table (build-in-public narrative reserved, not yet generated) |
 
 **A loop never auto-applies anything that can change a business output.** It posts to Slack; a
