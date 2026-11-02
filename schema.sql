@@ -7,30 +7,19 @@
 create extension if not exists "pgcrypto";
 
 -- Model mapping: the source of truth the llm layer resolves against by task_key.
--- The efficiency loop proposes changes; a human approves; this row is updated.
+-- A person changes a task's model by updating this row (registry.setModel).
 create table if not exists public.model_registry (
   task_key    text primary key,                 -- e.g. 'yarms_portal.brief'
   model       text not null,                    -- chosen model id
   rationale   text,
   evidence    jsonb not null default '{}',       -- A/B results, $ savings, sample sizes
-  updated_by  text not null default 'default',   -- 'efficiency_loop' | 'human' | 'default'
+  updated_by  text not null default 'default',   -- 'human' | 'default'
   updated_at  timestamptz not null default now()
 );
 
--- Sampled (input → output) per task-keyed call, for replay-based A/B in the loop.
--- Holds client prompts → central, service-role, internal only.
-create table if not exists public.eval_samples (
-  id            uuid primary key default gen_random_uuid(),
-  task_key      text not null,
-  model         text not null,
-  system_prompt text,
-  prompt        text,
-  output        text,
-  input_tokens  int,
-  output_tokens int,
-  created_at    timestamptz not null default now()
-);
-create index if not exists eval_samples_task_idx on public.eval_samples(task_key, created_at desc);
+-- eval_samples (sampled client prompts + outputs for the Model Efficiency Loop's A/B)
+-- was dropped 2026-11-02 with the loop. Nothing writes or reads it from v0.3.0.
+drop table if exists public.eval_samples;
 
 -- Bugs + improvements surfaced by the review loops (and client `signals`).
 create table if not exists public.findings (
@@ -111,13 +100,11 @@ create index if not exists security_audit_runs_repo_idx on public.security_audit
 -- RLS on + EXPLICIT service_role grants (auto-expose-off safe; service_role is the
 -- only user of these tables — the app/loops bypass RLS with it).
 alter table public.model_registry enable row level security;
-alter table public.eval_samples   enable row level security;
 alter table public.findings       enable row level security;
 alter table public.build_log      enable row level security;
 alter table public.app_state      enable row level security;
 alter table public.security_audit_runs enable row level security;
 grant all on public.model_registry to service_role;
-grant all on public.eval_samples   to service_role;
 grant all on public.findings       to service_role;
 grant all on public.build_log      to service_role;
 grant all on public.app_state      to service_role;

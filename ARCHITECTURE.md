@@ -12,7 +12,7 @@ improvements, the daily build report) are copy-pasted into each repo and drift.
 `yarms-core` replaces that with a **two-way loop**:
 
 ```
-   client runs on model from the Registry ──▶ emits usage + eval-samples + git activity
+   client runs on model from the Registry ──▶ emits usage + findings + git activity    
           ▲                                                   │
           │                                                   ▼
      Registry / rules updated  ◀── you approve in Slack ◀── Control Plane analyzes
@@ -33,9 +33,8 @@ The canonical modules clients `import` instead of owning copies:
   "same schema as command_center's copy" drift.
 - **`llm`** — model-agnostic call layer (Vercel AI SDK). The model for a task is
   **resolved from the Registry by `taskKey`**, not hardcoded — falling back to the
-  caller's `*_MODEL` env. Still records `eval_samples` by default (`sampleEval`), though
-  nothing reads them since the efficiency loop was removed (2026-11-02).
-- **`registry`** — reads `model_registry` (cached, short TTL) and writes `eval_samples`.
+  caller's `*_MODEL` env.
+- **`registry`** — reads `model_registry` (cached, short TTL); `setModel` changes a task's model.
 - **`signals`** — emit bug / improvement / build-activity events to `findings`.
 
 Versioned; a client picks up changes on a version bump (or a git-dep pull).
@@ -47,8 +46,6 @@ Lives in the central usage Supabase (`USAGE_SUPABASE_*`), service-role only. Tab
 - **`usage_log`** *(exists)* — per-call telemetry.
 - **`model_registry`** — `task_key → model + rationale + evidence + updated_by`. The
   source of truth the `llm` layer resolves against.
-- **`eval_samples`** — sampled `{task_key, model, system, prompt, output, tokens}` for
-  replay-based A/B. (Holds client prompts — central, service-role, internal only.)
 - **`findings`** — bugs + improvements surfaced by the review loops.
 
 ### 3. The Control Plane (the loops)
@@ -139,6 +136,6 @@ never in the package — the consuming app provides `USAGE_SUPABASE_*` etc. via 
 ## Build sequence
 1. **Foundation** *(here)* — package + `logger` + registry-driven `llm` + `registry` +
    `schema.sql`; dogfood on `yarms_co_portal`.
-2. **Eval capture** — `llm` samples inputs/outputs into `eval_samples`.
-3. ~~**Model Efficiency Loop**~~ — built, then removed 2026-11-02 (unreliable, unused).
+2. ~~**Eval capture**~~ + ~~**Model Efficiency Loop**~~ — built, then removed 2026-11-02
+   (unreliable, unused; `eval_samples` dropped, v0.3.0).
 4. **Bug + Improvement reviews**, then **Daily build report**.

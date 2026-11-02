@@ -1,15 +1,15 @@
 // Model-agnostic LLM layer (Vercel AI SDK). Consolidates yarms_agents'
 // battle-tested modelClient (retry budget, cache-token accounting, Anthropic-shaped
-// drop-in, document extraction) with registry-driven routing + eval sampling.
+// drop-in, document extraction) with registry-driven routing.
 //
 // The model for a call is resolved from the Registry by `taskKey` (falling back to
-// the caller's `model` / *_MODEL env), so the efficiency loop can retune routing
-// centrally. Two surfaces:
+// the caller's `model` / *_MODEL env), so a task's model can be changed centrally
+// with one Registry row. Two surfaces:
 //   generate({ taskKey, model, system, prompt, webSearch })  → { text, model, tokens }
 //   create({ taskKey, model, max_tokens, system, messages }) → Anthropic-shaped drop-in
 // The AI SDK is ESM, loaded via a cached dynamic import().
 
-const { resolveModel, recordEvalSample } = require('../registry');
+const { resolveModel } = require('../registry');
 
 // Retry budget for transient provider errors (429 / 500 / 529 Overloaded). ~5
 // spans ~60s of exponential backoff — enough to ride out a multi-batch
@@ -48,8 +48,8 @@ function _cacheUsage(result) {
   };
 }
 
-// Research/one-shot call with optional web search + registry routing + eval sampling.
-async function generate({ taskKey, model, system, prompt, webSearch = true, maxOutputTokens = 2000, maxRetries = MAX_RETRIES, sampleEval = true }) {
+// Research/one-shot call with optional web search + registry routing.
+async function generate({ taskKey, model, system, prompt, webSearch = true, maxOutputTokens = 2000, maxRetries = MAX_RETRIES }) {
   const effModel = await resolveModel(taskKey, model || 'claude-sonnet-4-6');
   const { generateText, stepCountIs } = await _loadSdk();
 
@@ -70,9 +70,6 @@ async function generate({ taskKey, model, system, prompt, webSearch = true, maxO
   const u = _cacheUsage(res);
   const out = { text: (res.text || '').trim(), model: effModel, inputTokens: u.input_tokens, outputTokens: u.output_tokens };
 
-  if (taskKey && sampleEval) {
-    await recordEvalSample({ taskKey, model: effModel, system, prompt, output: out.text, inputTokens: out.inputTokens, outputTokens: out.outputTokens });
-  }
   return out;
 }
 

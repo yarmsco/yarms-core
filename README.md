@@ -1,7 +1,7 @@
 # yarms-core
 
 The shared **master rule stack** for every Yarms client codebase. One place for usage
-logging, registry-driven model routing, eval sampling, and signals — so no repo
+logging, registry-driven model routing, and signals — so no repo
 copy-pastes them and they drift. **Read `ARCHITECTURE.md` first.**
 
 ## Install (in a client repo)
@@ -24,7 +24,7 @@ const { logger, llm, registry, signals } = require('yarms-core');
 // 1) route + call — model resolved from the Registry by taskKey (falls back to `model`)
 logger.setRunContext({ client: 'yarms_portal', agent: 'brief', label: company });
 const out = await llm.generate({
-  taskKey: 'yarms_portal.brief',   // the routing + eval key
+  taskKey: 'yarms_portal.brief',   // the routing key
   model: process.env.BRIEF_MODEL,  // fallback if the Registry has no override
   system, prompt, webSearch: true,
 });
@@ -43,5 +43,5 @@ Set `YARMS_CLIENT` once per repo so logs/signals are attributed without repeatin
 
 ## Registry setup
 Run `schema.sql` once in the **central usage Supabase** (creates `model_registry`,
-`eval_samples`, `findings`). Until then, routing falls back to the caller's `*_MODEL` env
-and eval/registry writes no-op — nothing breaks.
+`findings`, `build_log` and the rest). Until then, routing falls back to the caller's `*_MODEL` env
+and registry/signal writes no-op — nothing breaks.

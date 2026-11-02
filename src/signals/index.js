@@ -6,7 +6,7 @@ const { usageDb } = require('../db');
 
 const DEFAULT_CLIENT = process.env.YARMS_CLIENT || 'unknown';
 
-// type: 'bug' | 'improvement' | 'model_efficiency' | 'build'
+// type: 'bug' | 'improvement' | 'build'
 async function recordFinding({ type, client = DEFAULT_CLIENT, agent = null, title, detail = null, severity = 'med', metadata = {} }) {
   try {
     const d = usageDb();

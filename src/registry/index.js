@@ -1,7 +1,6 @@
-// The Registry: the center's model-mapping + eval-sample store. The llm layer
-// resolves the model for a task here; the efficiency loop writes proposals here.
-// Cached with a short TTL so a Registry change propagates to every client within
-// the TTL — no redeploy needed to act on an approved downgrade.
+// The Registry: the center's task → model mapping. The llm layer resolves the
+// model for a task here. Cached with a short TTL so a Registry change propagates to
+// every client within the TTL — no redeploy needed to change a task's model.
 
 const { usageDb } = require('../db');
 
@@ -32,7 +31,7 @@ async function resolveModel(taskKey, fallback = 'claude-sonnet-4-6') {
   return override || fallback;
 }
 
-// Set/replace a task's model mapping (used by the efficiency loop on approval, or seeding).
+// Set/replace a task's model mapping (a manual model change, or seeding).
 async function setModel(taskKey, model, { rationale = null, evidence = {}, updatedBy = 'human' } = {}) {
   const d = usageDb();
   if (!d) throw new Error('USAGE_SUPABASE_* not configured');
@@ -44,21 +43,6 @@ async function setModel(taskKey, model, { rationale = null, evidence = {}, updat
   _cache.delete(taskKey);
 }
 
-// Store a sampled (input, output) for later A/B replay. Best-effort.
-async function recordEvalSample({ taskKey, model, system, prompt, output, inputTokens, outputTokens }) {
-  try {
-    const d = usageDb();
-    if (!d || !taskKey) return;
-    await d.from('eval_samples').insert([{
-      task_key: taskKey, model,
-      system_prompt: system || null, prompt: prompt || null, output: output || null,
-      input_tokens: inputTokens ?? null, output_tokens: outputTokens ?? null,
-    }]);
-  } catch (e) {
-    console.warn('[yarms-core/registry] recordEvalSample failed (ignored):', e.message);
-  }
-}
-
 function _clearCache() { _cache.clear(); } // for tests
 
-module.exports = { resolveModel, setModel, recordEvalSample, _clearCache };
+module.exports = { resolveModel, setModel, _clearCache };

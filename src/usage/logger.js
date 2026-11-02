@@ -11,8 +11,8 @@
 
 const { usageDb } = require('../db');
 
-// $/million tokens. Keep in sync as models/prices change — the efficiency loop
-// reads this to price swaps.
+// $/million tokens. Keep in sync as models/prices change — usage_log cost is
+// computed from this.
 const PRICING = {
   'claude-opus-4-8':           { input: 5.0,  output: 25.0 },
   'claude-opus-4-7':           { input: 5.0,  output: 25.0 },
