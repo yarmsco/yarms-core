@@ -33,8 +33,8 @@ The canonical modules clients `import` instead of owning copies:
   "same schema as command_center's copy" drift.
 - **`llm`** — model-agnostic call layer (Vercel AI SDK). The model for a task is
   **resolved from the Registry by `taskKey`**, not hardcoded — falling back to the
-  caller's `*_MODEL` env. Records `eval_samples` for A/B. This is the knob the
-  efficiency loop turns.
+  caller's `*_MODEL` env. Still records `eval_samples` by default (`sampleEval`), though
+  nothing reads them since the efficiency loop was removed (2026-11-02).
 - **`registry`** — reads `model_registry` (cached, short TTL) and writes `eval_samples`.
 - **`signals`** — emit bug / improvement / build-activity events to `findings`.
 
@@ -57,7 +57,6 @@ has the **same shape — read signal → draft → Slack review → write back o
 
 | Loop | Reads | Produces |
 |---|---|---|
-| **Model Efficiency** | `usage_log` + `eval_samples` | model-registry downgrade proposals, proven by A/B (replay sampled inputs on the cheaper model, judge parity) + $ savings |
 | **Code Review Agent** (weekly; replaces the local audit agent) | each org repo's stable code, except NYFTA and personal_os | a fix per finding, each on its own PR, sorted into one of two lanes (below) → `findings`, one weekly post in #yarms-bugs (bugs + improvements sections), and the portal's Human in the loop queue |
 | **Daily build report** | git activity (GitHub API) + roadmap | per-repo "shipped" summary + open roadmap → Slack, and one row/day → `build_log` table (build-in-public narrative reserved, not yet generated) |
 
@@ -124,11 +123,11 @@ receiving it (like canceling a SaaS); their code keeps running.
 
 ## Model routing resolution order
 For any LLM call the effective model is resolved as:
-1. `model_registry[taskKey].model` (if present) — what the efficiency loop set,
+1. `model_registry[taskKey].model` (if present) — set by hand,
 2. else the caller's explicit `model` / `*_MODEL` env — the repo default,
 3. else the library default (`claude-sonnet-4-6`).
 
-So acting on an efficiency suggestion is a single Registry row update, and every client
+So changing a task's model is a single Registry row update, and every client
 picks it up on its next call (within the cache TTL) — no redeploy.
 
 ## Distribution
@@ -141,5 +140,5 @@ never in the package — the consuming app provides `USAGE_SUPABASE_*` etc. via 
 1. **Foundation** *(here)* — package + `logger` + registry-driven `llm` + `registry` +
    `schema.sql`; dogfood on `yarms_co_portal`.
 2. **Eval capture** — `llm` samples inputs/outputs into `eval_samples`.
-3. **Model Efficiency Loop** — first Control Plane job, evidence-based (A/B) before it posts.
+3. ~~**Model Efficiency Loop**~~ — built, then removed 2026-11-02 (unreliable, unused).
 4. **Bug + Improvement reviews**, then **Daily build report**.

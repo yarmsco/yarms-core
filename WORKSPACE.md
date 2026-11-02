@@ -10,7 +10,7 @@ The **single cross-project source of truth** for how we build here. Two halves:
 
 The **platform machine-layer** (the learning loops that turn this contract into automated
 enforcement) lives with its code in **`yarms-core/ARCHITECTURE.md`** — read that for the
-Registry / Control Plane / Model-Efficiency mechanics. This file is the human contract;
+Registry / Control Plane mechanics. This file is the human contract;
 `yarms-core` is the machine enforcement of the parts that learn.
 
 ---
@@ -43,7 +43,7 @@ This is the explicit, repeated preference: high quality is the point, not veloci
 |---|---|---|---|
 | Clients | Any laptop + GitHub org | — | Hold no state. Onboard = invite + clone. |
 | **Brain** | **Your agent code** | never swapped | The product. Calls the model *through the router*, never a vendor directly. |
-| **Model** | **Claude (Opus 4.8)** via the **Vercel AI SDK** router | Gemini · GPT · any | Provider is a one-line change; the SDK normalizes the rest. Anthropic **prompt caching** on the static prefix (2 ephemeral breakpoints via `providerOptions`) cuts repeat-send cost ~10×. Cost-route simple tasks to a cheaper tier per policy (see Model Efficiency, below). |
+| **Model** | **Claude (Opus 4.8)** via the **Vercel AI SDK** router | Gemini · GPT · any | Provider is a one-line change; the SDK normalizes the rest. Anthropic **prompt caching** on the static prefix (2 ephemeral breakpoints via `providerOptions`) cuts repeat-send cost ~10×. Cost-route simple tasks to a cheaper tier by choice, task by task (see Model choice, below). |
 | **Data** | **Supabase** (managed Postgres) | any Postgres host | Postgres + JSONB; Storage for documents. QB tokens live here too (row + locking) for the client agents. |
 | **Compute** | **Railway** | Render · Fly.io · VPS | Always-on services + **cron in code** (`node-cron` / Railway cron). Right shape for persistent Slack bots + long agent turns (serverless is *not* — ephemeral, time-limited). |
 
@@ -231,7 +231,7 @@ the ledger above with a reason, or it is a bug to fix.
   EOL**. The deprecation warning printed on
   every single run the whole time — **a warning pages nobody**, which is precisely why
   the refresh has to be a bot opening PRs rather than a good intention. **It proposes;
-  you decide** (the same rule the Model Efficiency Loop follows) — Railway auto-deploys
+  you decide** — Railway auto-deploys
   from `main`, so anything auto-merged would deploy itself unreviewed. Majors are
   deliberately left ungrouped: read the changelog before taking one.
 - **Continuous code review: the Code Review Agent** (a weekly `yarms-control-plane` loop
@@ -259,15 +259,12 @@ the ledger above with a reason, or it is a bug to fix.
   The auditor runs with no secrets but the model key, and cannot execute the code it reads.
   It complements the Code Review Agent; it does not replace it. Mechanics:
   `yarms-control-plane/src/security-audit/`.
-- **Model Efficiency Loop (periodic model-ROI audit).** Model choices are never locked —
-  they're revisited on a cadence by an actual backend loop (in `yarms-core` / the Control
-  Plane), not by goodwill. Because every LLM call is tagged in `usage_log`, the loop
-  aggregates spend *per task*, flags premium-model tasks that could run on a cheaper tier
-  (Haiku, Gemini Flash, open-source), proves it with evidence-based A/B on replayed real
-  inputs, and posts ranked "downgrade candidates" to Slack. **It never auto-swaps — it
-  proposes; you decide.** Acting on a suggestion is a one-line Registry/`*_MODEL` change.
-  Current default for reasoning/brief tasks: **Claude Sonnet 4.6** (out-rigored Gemini 2.5
-  Flash — caught a planted unverifiable fact). **Full mechanics: `yarms-core/ARCHITECTURE.md`.**
+- **Model choice is a manual decision.** Every LLM call is tagged in `usage_log`, so spend
+  per task is always visible; moving a task to a cheaper tier is a one-line
+  Registry/`*_MODEL` change made by a person. *(The automated Model Efficiency Loop, a
+  weekly A/B "downgrade candidates" review to Slack, was removed 2026-11-02: JY, "not
+  working correctly at all.")* Current default for reasoning/brief tasks: **Claude Sonnet 4.6** (out-rigored Gemini 2.5
+  Flash — caught a planted unverifiable fact).
 
 ---
 
