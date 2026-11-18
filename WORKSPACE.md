@@ -43,7 +43,7 @@ This is the explicit, repeated preference: high quality is the point, not veloci
 |---|---|---|---|
 | Clients | Any laptop + GitHub org | — | Hold no state. Onboard = invite + clone. |
 | **Brain** | **Your agent code** | never swapped | The product. Calls the model *through the router*, never a vendor directly. |
-| **Model** | **Claude (Opus 4.8)** via the **Vercel AI SDK** router | Gemini · GPT · any | Provider is a one-line change; the SDK normalizes the rest. Anthropic **prompt caching** on the static prefix (2 ephemeral breakpoints via `providerOptions`) cuts repeat-send cost ~10×. Cost-route simple tasks to a cheaper tier by choice, task by task (see Model choice, below). |
+| **Model** | **Claude (Opus 4.8)** via the **Vercel AI SDK** router | Gemini · GPT · any | Provider is a one-line change; the SDK normalizes the rest. Anthropic **prompt caching**: the router marks every system prompt cacheable (yarms-core `llm`, yarms_agents `modelClient`; `cache: false` opts out), so a repeat send costs ~10% of the input price. Keep the system prompt byte-identical across calls and put per-call data in the messages. *(Until 2026-11-18 only personal_os cached.)* Cost-route simple tasks to a cheaper tier by choice, task by task (see Model choice, below). |
 | **Data** | **Supabase** (managed Postgres) | any Postgres host | Postgres + JSONB; Storage for documents. QB tokens live here too (row + locking) for the client agents. |
 | **Compute** | **Railway** | Render · Fly.io · VPS | Always-on services + **cron in code** (`node-cron` / Railway cron). Right shape for persistent Slack bots + long agent turns (serverless is *not* — ephemeral, time-limited). |
 

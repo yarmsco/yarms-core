@@ -38,6 +38,21 @@ async function _model(effModel) {
   const { anthropic } = await import('@ai-sdk/anthropic');
   return anthropic(effModel);
 }
+// Prompt caching. An Anthropic call's system prompt is marked cacheable, so a run
+// that sends the same instructions more than once (commentary batches, a fix pass,
+// a statement read per account) pays ~10% of the input price for them after the
+// first call. A prefix below the model's minimum (1024 tokens on Opus 4.8 / Sonnet
+// 4.6, 512 on the 5.x models) is silently not cached — no error, no extra cost.
+// A one-off call pays 1.25x on its system prompt, a rounding error next to the
+// reads. The cache marker covers tools + system, so both must stay byte-identical
+// across calls: put anything that changes per call (dates, ids, data) in the
+// messages, never in `system`. `cache: false` sends the system prompt unmarked.
+function systemFor(effModel, system, cache = true) {
+  if (!system) return undefined;
+  if (!cache || providerOf(effModel) !== 'anthropic' || typeof system !== 'string') return system;
+  return { role: 'system', content: system, providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } } };
+}
+
 // Usage across EVERY step of a generateText result, in Anthropic field names.
 // result.usage / result.providerMetadata describe the LAST step only; a call that
 // ran tools (web search, stopWhen) bills every step, so each step's raw Anthropic
@@ -77,7 +92,7 @@ function servedModel(result, effModel) {
 // Research/one-shot call with optional web search + registry routing.
 // Every call below is logged into the current run (logger.startRun().scope()),
 // or as unattributed if there is none — callers never log model calls themselves.
-async function generate({ taskKey, model, system, prompt, webSearch = true, maxOutputTokens = 2000, maxRetries = MAX_RETRIES, callType }) {
+async function generate({ taskKey, model, system, prompt, webSearch = true, maxOutputTokens = 2000, maxRetries = MAX_RETRIES, callType, cache }) {
   const effModel = await resolveModel(taskKey, model || 'claude-sonnet-4-6');
   const { generateText, stepCountIs } = await _loadSdk();
 
@@ -91,7 +106,7 @@ async function generate({ taskKey, model, system, prompt, webSearch = true, maxO
   }
 
   const res = await generateText({
-    model: await _model(effModel), system, prompt, tools,
+    model: await _model(effModel), system: systemFor(effModel, system, cache), prompt, tools,
     stopWhen: stepCountIs(5), maxOutputTokens, maxRetries,
   });
 
@@ -109,10 +124,10 @@ async function generate({ taskKey, model, system, prompt, webSearch = true, maxO
 // Anthropic-shaped drop-in for message-style calls (retries + cache tokens).
 // Returns { model, content:[{type:'text',text}], usage:{ input_tokens, ... } } so
 // existing call sites + logger.logClaudeCall() need no changes.
-async function create({ taskKey, model, max_tokens = 4096, system, messages, maxRetries = MAX_RETRIES, callType }) {
+async function create({ taskKey, model, max_tokens = 4096, system, messages, maxRetries = MAX_RETRIES, callType, cache }) {
   const effModel = await resolveModel(taskKey, model);
   const { generateText } = await _loadSdk();
-  const result = await generateText({ model: await _model(effModel), system: system || undefined, messages, maxOutputTokens: max_tokens, maxRetries });
+  const result = await generateText({ model: await _model(effModel), system: systemFor(effModel, system, cache), messages, maxOutputTokens: max_tokens, maxRetries });
   const usage = usageOf(result);
   const served = servedModel(result, effModel);
   await logger.record({ model: served, usage, callType, taskKey });
@@ -124,11 +139,11 @@ async function create({ taskKey, model, max_tokens = 4096, system, messages, max
 }
 
 // Document/vision extraction (e.g. a PDF) via the AI SDK's unified file part.
-async function extractFromDocument({ taskKey, model, max_tokens = 2048, system, fileBuffer, mediaType = 'application/pdf', userText, maxRetries = MAX_RETRIES, callType }) {
+async function extractFromDocument({ taskKey, model, max_tokens = 2048, system, fileBuffer, mediaType = 'application/pdf', userText, maxRetries = MAX_RETRIES, callType, cache }) {
   const effModel = await resolveModel(taskKey, model);
   const { generateText } = await _loadSdk();
   const result = await generateText({
-    model: await _model(effModel), system: system || undefined,
+    model: await _model(effModel), system: systemFor(effModel, system, cache),
     messages: [{ role: 'user', content: [{ type: 'file', data: fileBuffer, mediaType }, { type: 'text', text: userText }] }],
     maxOutputTokens: max_tokens, maxRetries,
   });
@@ -138,4 +153,4 @@ async function extractFromDocument({ taskKey, model, max_tokens = 2048, system, 
   return { text: result.text || '', model: served, usage, finishReason: result.finishReason || null };
 }
 
-module.exports = { generate, create, messages: { create }, extractFromDocument, providerOf, usageOf };
+module.exports = { generate, create, messages: { create }, extractFromDocument, providerOf, usageOf, systemFor };
