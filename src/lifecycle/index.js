@@ -5,6 +5,7 @@
 //   life.wrapCron(require('node-cron'));   // before anything calls cron.schedule
 //   life.addBusy('dispatch', () => [...]); // work this process owns that has no promise here
 //   life.onDrain(() => stopTakingWork());  // runs once, on SIGTERM
+//   setInterval(life.guard('payroll scan', scan), ms); // a timer loop, leased like a cron
 //   life.install();                        // signal handlers + the lease
 //
 // WHY. Railway stops the old deployment once the new one is up: SIGTERM, then SIGKILL
@@ -282,7 +283,7 @@ function create({
   }
 
   const api = {
-    track, addBusy, onDrain, wrapCron, install, drain, step, inFlight,
+    track, addBusy, onDrain, wrapCron, guard, install, drain, step, inFlight,
     isDraining: () => draining,
     holdsLease: () => holding,
     instance,
