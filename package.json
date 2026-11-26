@@ -10,9 +10,9 @@
     "verify:workspace": "node scripts/sync-workspace-contract.js --check"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.2",
-    "@ai-sdk/google": "^4.0.2",
-    "@supabase/supabase-js": "^2.46.1",
-    "ai": "^7.0.6"
+    "@ai-sdk/anthropic": "^4.0.106",
+    "@ai-sdk/google": "^4.0.122",
+    "@supabase/supabase-js": "^2.119.2",
+    "ai": "^7.0.177"
   }
 }
