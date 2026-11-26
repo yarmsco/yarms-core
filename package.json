@@ -5,7 +5,7 @@
   "description": "Yarms master rule stack — shared usage logging, registry-driven model routing, and signals for every Yarms client codebase.",
   "main": "src/index.js",
   "scripts": {
-    "test": "node scripts/selftest.js",
+    "test": "node scripts/selftest.js && node scripts/test-lifecycle.js",
     "sync:workspace": "node scripts/sync-workspace-contract.js",
     "verify:workspace": "node scripts/sync-workspace-contract.js --check"
   },

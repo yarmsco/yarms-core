@@ -36,6 +36,12 @@ The canonical modules clients `import` instead of owning copies:
   caller's `*_MODEL` env.
 - **`registry`** — reads `model_registry` (cached, short TTL); `setModel` changes a task's model.
 - **`signals`** — emit bug / improvement / build-activity events to `findings`.
+- **`lifecycle`** — deploys stop cutting runs off. On SIGTERM a service takes no new
+  work, waits for what is running (up to `RAILWAY_DEPLOYMENT_DRAINING_SECONDS`, which
+  Railway defaults to 0), then exits. Scheduled jobs fire only in the process holding the
+  service's lease (`service_leases`), so the old and new process never both run the
+  hourly jobs; a job that came due during the handover runs once when the new process
+  takes over. Require it as `yarms-core/src/lifecycle` to skip loading the model SDKs.
 
 Versioned; a client picks up changes on a version bump (or a git-dep pull).
 
